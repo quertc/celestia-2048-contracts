@@ -164,7 +164,10 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
                 stackPop = 0;
             }
 
-            require(keccak256(abi.encodePacked(tiles)) != tilesHash, "No movement");
+            require(
+                keccak256(abi.encodePacked(tiles)) != tilesHash,
+                "No movement"
+            );
         }
     }
 
@@ -209,7 +212,10 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
                 stackPop = 0;
             }
 
-            require(keccak256(abi.encodePacked(tiles)) != tilesHash, "No movement");
+            require(
+                keccak256(abi.encodePacked(tiles)) != tilesHash,
+                "No movement"
+            );
         }
     }
 
@@ -254,7 +260,10 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
                 stackPop = 0;
             }
 
-            require(keccak256(abi.encodePacked(tiles)) != tilesHash, "No movement");
+            require(
+                keccak256(abi.encodePacked(tiles)) != tilesHash,
+                "No movement"
+            );
         }
     }
 
@@ -301,7 +310,10 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
                 stackPop = 0;
             }
 
-            require(keccak256(abi.encodePacked(tiles)) != tilesHash, "No movement");
+            require(
+                keccak256(abi.encodePacked(tiles)) != tilesHash,
+                "No movement"
+            );
         }
     }
 
@@ -349,6 +361,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
         uint256 indexed boardId,
         uint256 totalScore
     );
+
     function endGame(uint256 boardId) public onlyBoardOwner(boardId) {
         uint256 score = boards[boardId].score;
 
@@ -361,12 +374,14 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
         emit EndGame(msg.sender, boardId, score);
     }
 
-    function tokenURI(uint256 tokenId) public virtual override view returns(string memory) {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         IMetadata2048 metadata = token2048.metadataController();
         if (address(metadata) == address(0)) {
             return "";
         }
-        
+
         return metadata.tokenURI(tokenId);
     }
 }
