@@ -23,7 +23,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
         address owner;
         uint256 id;
         uint256 score;
-        bool active;
+        // bool active;
         uint256[] tiles;
     }
     Board[] private boards;
@@ -34,7 +34,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
     modifier onlyBoardOwner(uint256 boardId) {
         require(msg.sender == boards[boardId].owner, "Not board owner");
-        require(boards[boardId].active, "Board finished");
+        // require(boards[boardId].active, "Board finished");
         _;
     }
 
@@ -99,7 +99,9 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
     function createBoard(
         uint256 nonce
-    ) public returns (uint256 boardId, uint256 startIndex) {
+    ) public payable returns (uint256 boardId, uint256 startIndex) {
+        require(msg.value == token2048.createBoardPrice(), "Underpay");
+
         uint256[] memory tiles = new uint256[](16);
 
         _resetBoard(tiles);
@@ -115,7 +117,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
                 owner: msg.sender,
                 id: boardId,
                 score: 0,
-                active: true,
+                // active: true,
                 tiles: tiles
             })
         );
@@ -345,34 +347,34 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
         board.score += extraScore;
 
-        (uint256 newIndex, uint256 totalMissing) = _new2(board);
+        if (address(token2048) != address(0)) {
+            token2048.mint(msg.sender, extraScore);
+        }
+
+        (uint256 newIndex, ) = _new2(board);
 
         boards[boardId] = board;
-
-        if (totalMissing <= 1) {
-            endGame(boardId);
-        }
 
         emit Move(msg.sender, boardId, dir, newIndex, extraScore, board.score);
     }
 
-    event EndGame(
-        address indexed owner,
-        uint256 indexed boardId,
-        uint256 totalScore
-    );
+    // event EndGame(
+    //     address indexed owner,
+    //     uint256 indexed boardId,
+    //     uint256 totalScore
+    // );
 
-    function endGame(uint256 boardId) public onlyBoardOwner(boardId) {
-        uint256 score = boards[boardId].score;
+    // function endGame(uint256 boardId) public onlyBoardOwner(boardId) {
+    //     uint256 score = boards[boardId].score;
 
-        boards[boardId].active = false;
+    //     boards[boardId].active = false;
 
-        if (address(token2048) != address(0)) {
-            token2048.mint(msg.sender, score);
-        }
+    //     if (address(token2048) != address(0)) {
+    //         token2048.mint(msg.sender, score);
+    //     }
 
-        emit EndGame(msg.sender, boardId, score);
-    }
+    //     emit EndGame(msg.sender, boardId, score);
+    // }
 
     function tokenURI(
         uint256 tokenId
