@@ -28,6 +28,11 @@ const config: HardhatUserConfig = {
       chainId: 420,
       accounts: [ PRIVATE_KEY ]
     },
+    bubs_testnet: {
+      url: "https://bubs.calderachain.xyz/http",
+      chainId: 1582,
+      accounts: [ PRIVATE_KEY ]
+    },
   }
 };
 
