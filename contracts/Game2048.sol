@@ -348,7 +348,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
         board.score += extraScore;
 
         if (address(token2048) != address(0)) {
-            token2048.mint(msg.sender, extraScore);
+            token2048.mint(msg.sender, extraScore * 1e18);
         }
 
         (uint256 newIndex, ) = _new2(board);
