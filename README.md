@@ -6,5 +6,5 @@ Smart contract for the fully on-chain 2048 game on a Celestia OP Stack rollup
 
 ### Optimism Testnet
 
-* Token2048: 0x3d78Ac0bc103abAb7DE20bFBeAa8Ac733468CD4d
-* Game2048: 0xD6047245E0fc9bAa6231cD8D013B1118b5042aA9
+* Token2048: 0x658A28E8BD1910b2A43135411459fEadb9d56EfA
+* Game2048: 0x2A0Db8b0a8A89704bb138876D12453a0eDe3932E
