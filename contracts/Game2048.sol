@@ -3,12 +3,12 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./IToken2048.sol";
+import "./Token2048.sol";
 
 contract Game2048 is ERC721("2048 Board", "2048B") {
-    IToken2048 public immutable token2048;
+    Token2048 public immutable token2048;
 
-    constructor(IToken2048 _token2048) {
+    constructor(Token2048 _token2048) {
         token2048 = _token2048;
     }
 
@@ -21,19 +21,22 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
     struct Board {
         address owner;
+        address controller;
         uint256 id;
         uint256 score;
+        uint256 moves;
         // bool active;
         uint256[] tiles;
     }
     Board[] private boards;
+    mapping(address => uint256) public highScores;
 
     function getBoard(uint256 id) public view returns (Board memory) {
         return boards[id];
     }
 
-    modifier onlyBoardOwner(uint256 boardId) {
-        require(msg.sender == boards[boardId].owner, "Not board owner");
+    modifier onlyBoardController(uint256 boardId) {
+        require(msg.sender == boards[boardId].owner || msg.sender == boards[boardId].controller, "Not board owner");
         // require(boards[boardId].active, "Board finished");
         _;
     }
@@ -98,6 +101,8 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
     );
 
     function createBoard(
+        address owner,
+        address controller,
         uint256 nonce
     ) public payable returns (uint256 boardId, uint256 startIndex) {
         require(msg.value == token2048.createBoardPrice(), "Underpay");
@@ -114,17 +119,19 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
         boards.push(
             Board({
-                owner: msg.sender,
+                owner: owner,
+                controller: controller,
                 id: boardId,
                 score: 0,
+                moves: 0,
                 // active: true,
                 tiles: tiles
             })
         );
 
-        _mint(msg.sender, boardId);
+        _mint(owner, boardId);
 
-        emit CreateBoard(msg.sender, nonce, boardId, startIndex);
+        emit CreateBoard(owner, nonce, boardId, startIndex);
     }
 
     function _moveUp(Board memory board) internal pure returns (uint256 score) {
@@ -168,7 +175,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
             require(
                 keccak256(abi.encodePacked(tiles)) != tilesHash,
-                "No movement"
+                "Cannot move in this direction"
             );
         }
     }
@@ -216,7 +223,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
             require(
                 keccak256(abi.encodePacked(tiles)) != tilesHash,
-                "No movement"
+                "Cannot move in this direction"
             );
         }
     }
@@ -264,7 +271,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
             require(
                 keccak256(abi.encodePacked(tiles)) != tilesHash,
-                "No movement"
+                "Cannot move in this direction"
             );
         }
     }
@@ -314,10 +321,15 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
             require(
                 keccak256(abi.encodePacked(tiles)) != tilesHash,
-                "No movement"
+                "Cannot move in this direction"
             );
         }
     }
+
+    event HighScore(
+        address indexed owner,
+        uint256 score
+    );
 
     event Move(
         address indexed owner,
@@ -330,10 +342,13 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
     function move(
         uint256 boardId,
+        uint256 moveIndex,
         MoveDirection dir
-    ) public onlyBoardOwner(boardId) {
+    ) public onlyBoardController(boardId) {
         Board memory board = boards[boardId];
         uint256 extraScore;
+
+        require(moveIndex == board.moves++, "Move already executed");
 
         if (dir == MoveDirection.UP) {
             extraScore = _moveUp(board);
@@ -347,15 +362,20 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
         board.score += extraScore;
 
+        if (board.score > highScores[board.owner]) {
+            highScores[board.owner] = board.score;
+            emit HighScore(board.owner, board.score);
+        }
+
         if (address(token2048) != address(0)) {
-            token2048.mint(msg.sender, extraScore * 1e18);
+            token2048.mint(board.owner, extraScore * 1e18);
         }
 
         (uint256 newIndex, ) = _new2(board);
 
         boards[boardId] = board;
 
-        emit Move(msg.sender, boardId, dir, newIndex, extraScore, board.score);
+        emit Move(board.owner, boardId, dir, newIndex, extraScore, board.score);
     }
 
     // event EndGame(
@@ -364,16 +384,16 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
     //     uint256 totalScore
     // );
 
-    // function endGame(uint256 boardId) public onlyBoardOwner(boardId) {
+    // function endGame(uint256 boardId) public onlyBoardController(boardId) {
     //     uint256 score = boards[boardId].score;
 
     //     boards[boardId].active = false;
 
     //     if (address(token2048) != address(0)) {
-    //         token2048.mint(msg.sender, score);
+    //         token2048.mint(boards[boardId].owner, score);
     //     }
 
-    //     emit EndGame(msg.sender, boardId, score);
+    //     emit EndGame(boards[boardId].owner, boardId, score);
     // }
 
     function tokenURI(
@@ -385,5 +405,16 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
         }
 
         return metadata.tokenURI(tokenId);
+    }
+
+    // Withdraw module
+    function withdrawETH() public {
+        address a = token2048.owner();
+        (bool success, ) = a.call{value: address(this).balance}("");
+        require(success, "Withdraw failed");
+    }
+
+    function withdrawERC20(IERC20 token) public {
+        token.transfer(token2048.owner(), token.balanceOf(address(this)));
     }
 }

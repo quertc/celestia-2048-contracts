@@ -1,12 +1,16 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const token = await ethers.deployContract("Token2048");
+  const token = await ethers.deployContract("Token2048", {
+    nonce: 0,
+  });
   await token.waitForDeployment();
 
   console.log("Token2048", await token.getAddress())
 
-  const game = await ethers.deployContract("Game2048", [ await token.getAddress() ]);
+  const game = await ethers.deployContract("Game2048", [ await token.getAddress() ], {
+    nonce: 1,
+  });
   await game.waitForDeployment();
 
   console.log("Game2048", await game.getAddress())
