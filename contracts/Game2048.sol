@@ -328,6 +328,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
     event HighScore(
         address indexed owner,
+        uint256 indexed boardId,
         uint256 score
     );
 
@@ -364,7 +365,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
         if (board.score > highScores[board.owner]) {
             highScores[board.owner] = board.score;
-            emit HighScore(board.owner, board.score);
+            emit HighScore(board.owner, boardId, board.score);
         }
 
         if (address(token2048) != address(0)) {
