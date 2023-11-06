@@ -38,6 +38,11 @@ const config: HardhatUserConfig = {
       chainId: 42069,
       accounts: [ PRIVATE_KEY ]
     },
+    op_devnet: {
+      url: "http://192.168.100.110:9545",
+      chainId: 901,
+      accounts: [ PRIVATE_KEY ]
+    },
   }
 };
 
