@@ -105,7 +105,7 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
         address controller,
         uint256 nonce
     ) public payable returns (uint256 boardId, uint256 startIndex) {
-        require(msg.value == token2048.createBoardPrice(), "Underpay");
+        require(msg.value >= token2048.createBoardPrice(), "Underpay");
 
         uint256[] memory tiles = new uint256[](16);
 
@@ -130,6 +130,13 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
         );
 
         _mint(owner, boardId);
+
+        uint256 controllerGas = msg.value - token2048.createBoardPrice();
+
+        if (controllerGas > 0) {
+            (bool sendGasSuccess, ) = controller.call{value: controllerGas}("");
+            require(sendGasSuccess, "Failed to send gas to controller");
+        }
 
         emit CreateBoard(owner, nonce, boardId, startIndex);
     }
