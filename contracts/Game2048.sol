@@ -3,18 +3,14 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IToken2048.sol";
+import "./Initializable.sol";
 
-contract Game2048 is ERC721("2048 Board", "2048B"), Ownable {
-    IToken2048 public immutable token2048;
-
+contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
+    IToken2048 public token2048;
     IMetadata2048 public metadataController;
+    address public admin;
     mapping(address => uint256) public createBoardPrice;
-
-    constructor(IToken2048 _token2048) {
-        token2048 = _token2048;
-    }
 
     enum MoveDirection {
         UP,
@@ -35,14 +31,26 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Ownable {
     Board[] private boards;
     mapping(address => uint256) public highScores;
 
-    function getBoard(uint256 id) public view returns (Board memory) {
-        return boards[id];
-    }
+    uint256[100] private __gap;
 
     modifier onlyBoardController(uint256 boardId) {
         require(msg.sender == boards[boardId].owner || msg.sender == boards[boardId].controller, "Not board owner");
         // require(boards[boardId].active, "Board finished");
         _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == admin, "Forbidden");
+        _;
+    }
+
+    function initialize(address _admin, IToken2048 _token2048) public initializer {
+        admin = _admin;
+        token2048 = _token2048;
+    }
+
+    function getBoard(uint256 id) public view returns (Board memory) {
+        return boards[id];
     }
 
     // Note: pseudo random but good enough on OP Stack as block.difficulty is a random value
@@ -105,7 +113,7 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Ownable {
     );
 
     function createBoard(
-        address owner,
+        address boardOwner,
         address controller,
         address paymentToken,
         uint256 nonce
@@ -125,7 +133,7 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Ownable {
 
         boards.push(
             Board({
-                owner: owner,
+                owner: boardOwner,
                 controller: controller,
                 id: boardId,
                 score: 0,
@@ -135,7 +143,7 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Ownable {
             })
         );
 
-        _mint(owner, boardId);
+        _mint(boardOwner, boardId);
 
         if (paymentToken != address(0)) {
             IERC20(paymentToken).transferFrom(msg.sender, address(this), createBoardPrice[paymentToken]);
@@ -152,7 +160,7 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Ownable {
             require(sendGasSuccess, "Failed to send gas to controller");
         }
 
-        emit CreateBoard(owner, nonce, boardId, startIndex);
+        emit CreateBoard(boardOwner, nonce, boardId, startIndex);
     }
 
     function _moveUp(Board memory board) internal pure returns (uint256 score) {
@@ -438,14 +446,20 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Ownable {
         emit SetCreateBoardPrice(msg.sender, token, price);
     }
 
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    function transferOwnership(address newAdmin) public onlyOwner {
+        emit OwnershipTransferred(admin, newAdmin);
+        admin = newAdmin;
+    }
+
     // Withdraw module
     function withdrawETH() public onlyOwner {
-        address a = owner();
+        address a = admin;
         (bool success, ) = a.call{value: address(this).balance}("");
         require(success, "Withdraw failed");
     }
 
     function withdrawERC20(IERC20 token) public onlyOwner {
-        token.transfer(owner(), token.balanceOf(address(this)));
+        token.transfer(admin, token.balanceOf(address(this)));
     }
 }

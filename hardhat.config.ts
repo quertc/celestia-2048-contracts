@@ -4,6 +4,7 @@ dotenv()
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-deploy"
+import "hardhat-deploy-ethers"
 
 const PRIVATE_KEY: string = process.env.PRIVATE_KEY!
 const ETHERSCAN_API_KEY: string = process.env.ETHERSCAN_API_KEY!
@@ -43,6 +44,14 @@ const config: HardhatUserConfig = {
       url: "http://192.168.100.110:9545",
       chainId: 901,
       accounts: [ PRIVATE_KEY ]
+    },
+  },
+  namedAccounts: {
+    deployer: {
+      default: 0,
+    },
+    owner: {
+      default: 0,
     },
   },
 };
