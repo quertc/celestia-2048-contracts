@@ -3,6 +3,7 @@ dotenv()
 
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
+import "hardhat-deploy"
 
 const PRIVATE_KEY: string = process.env.PRIVATE_KEY!
 const ETHERSCAN_API_KEY: string = process.env.ETHERSCAN_API_KEY!
@@ -43,7 +44,7 @@ const config: HardhatUserConfig = {
       chainId: 901,
       accounts: [ PRIVATE_KEY ]
     },
-  }
+  },
 };
 
 export default config;

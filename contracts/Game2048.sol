@@ -3,12 +3,16 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "./Token2048.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./IToken2048.sol";
 
-contract Game2048 is ERC721("2048 Board", "2048B") {
-    Token2048 public immutable token2048;
+contract Game2048 is ERC721("2048 Board", "2048B"), Ownable {
+    IToken2048 public immutable token2048;
 
-    constructor(Token2048 _token2048) {
+    IMetadata2048 public metadataController;
+    mapping(address => uint256) public createBoardPrice;
+
+    constructor(IToken2048 _token2048) {
         token2048 = _token2048;
     }
 
@@ -103,9 +107,11 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
     function createBoard(
         address owner,
         address controller,
+        address paymentToken,
         uint256 nonce
     ) public payable returns (uint256 boardId, uint256 startIndex) {
-        require(msg.value >= token2048.createBoardPrice(), "Underpay");
+        require(createBoardPrice[paymentToken] > 0, "Payment token not supported");
+        require(paymentToken != address(0) || msg.value >= createBoardPrice[address(0)], "Underpay");
 
         uint256[] memory tiles = new uint256[](16);
 
@@ -131,7 +137,15 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
 
         _mint(owner, boardId);
 
-        uint256 controllerGas = msg.value - token2048.createBoardPrice();
+        if (paymentToken != address(0)) {
+            IERC20(paymentToken).transferFrom(msg.sender, address(this), createBoardPrice[paymentToken]);
+        }
+
+        uint256 controllerGas = msg.value;
+
+        if (paymentToken == address(0)) {
+            controllerGas -= createBoardPrice[address(0)];
+        }
 
         if (controllerGas > 0) {
             (bool sendGasSuccess, ) = controller.call{value: controllerGas}("");
@@ -407,22 +421,31 @@ contract Game2048 is ERC721("2048 Board", "2048B") {
     function tokenURI(
         uint256 tokenId
     ) public view virtual override returns (string memory) {
-        IMetadata2048 metadata = token2048.metadataController();
-        if (address(metadata) == address(0)) {
+        if (address(metadataController) == address(0)) {
             return "";
         }
 
-        return metadata.tokenURI(tokenId);
+        return metadataController.tokenURI(tokenId);
+    }
+
+    function setMetadataController(IMetadata2048 controller) public onlyOwner {
+        metadataController = controller;
+    }
+
+    event SetCreateBoardPrice(address indexed setter, address indexed token, uint256 price);
+    function setCreateBoardPrice(address token, uint256 price) public onlyOwner {
+        createBoardPrice[token] = price;
+        emit SetCreateBoardPrice(msg.sender, token, price);
     }
 
     // Withdraw module
-    function withdrawETH() public {
-        address a = token2048.owner();
+    function withdrawETH() public onlyOwner {
+        address a = owner();
         (bool success, ) = a.call{value: address(this).balance}("");
         require(success, "Withdraw failed");
     }
 
-    function withdrawERC20(IERC20 token) public {
-        token.transfer(token2048.owner(), token.balanceOf(address(this)));
+    function withdrawERC20(IERC20 token) public onlyOwner {
+        token.transfer(owner(), token.balanceOf(address(this)));
     }
 }

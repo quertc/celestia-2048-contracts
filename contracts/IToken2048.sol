@@ -6,6 +6,4 @@ import "./IMetadata2048.sol";
 
 interface IToken2048 is IERC20 {
     function mint(address to, uint256 amount) external;
-    function metadataController() external view returns(IMetadata2048);
-    function createBoardPrice() external view returns(uint256);
 }

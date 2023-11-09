@@ -7,22 +7,10 @@ import "./IToken2048.sol";
 
 // Used for minting test ERC20s in our tests
 contract Token2048 is ERC20("2048 Token", "2048"), Ownable, IToken2048 {
-    IMetadata2048 public metadataController;
-    uint256 public createBoardPrice = 0.00005 ether;
     mapping(address => bool) public minters;
 
     function setMinter(address minter, bool enabled) public onlyOwner {
         minters[minter] = enabled;
-    }
-
-    function setMetadataController(IMetadata2048 controller) public onlyOwner {
-        metadataController = controller;
-    }
-
-    event SetCreateBoardPrice(address indexed setter, uint256 price);
-    function setCreateBoardPrice(uint256 price) public onlyOwner {
-        createBoardPrice = price;
-        emit SetCreateBoardPrice(msg.sender, price);
     }
 
     function mint(address to, uint256 amount) external {
