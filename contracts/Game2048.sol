@@ -24,6 +24,7 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
         address controller;
         uint256 id;
         uint256 score;
+        uint256 maxTile;
         uint256 moves;
         // bool active;
         uint256[] tiles;
@@ -107,9 +108,10 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
     // Anybody can create their own board
     event CreateBoard(
         address indexed owner,
-        uint256 indexed nonce,
+        address indexed controller,
         uint256 indexed boardId,
-        uint256 startIndex
+        uint256 startIndex,
+        uint256 nonce
     );
 
     function createBoard(
@@ -137,6 +139,7 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
                 controller: controller,
                 id: boardId,
                 score: 0,
+                maxTile: 2,
                 moves: 0,
                 // active: true,
                 tiles: tiles
@@ -160,7 +163,7 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
             require(sendGasSuccess, "Failed to send gas to controller");
         }
 
-        emit CreateBoard(boardOwner, nonce, boardId, startIndex);
+        emit CreateBoard(boardOwner, controller, boardId, startIndex, nonce);
     }
 
     function _moveUp(Board memory board) internal pure returns (uint256 score) {
@@ -195,6 +198,9 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
                     } else {
                         tiles[(tileIndex[col] - 1) * 4 + col] = stackPop * 2;
                         score += stackPop * 2;
+                        if (stackPop * 2 > board.maxTile) {
+                            board.maxTile = stackPop * 2;
+                        }
                         stackPop = 0;
                     }
                 }
@@ -243,6 +249,9 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
                     } else {
                         tiles[(tileIndex[col] + 1) * 4 + col] = stackPop * 2;
                         score += stackPop * 2;
+                        if (stackPop * 2 > board.maxTile) {
+                            board.maxTile = stackPop * 2;
+                        }
                         stackPop = 0;
                     }
                 }
@@ -291,6 +300,9 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
                     } else {
                         tiles[row * 4 + (tileIndex[row] - 1)] = stackPop * 2;
                         score += stackPop * 2;
+                        if (stackPop * 2 > board.maxTile) {
+                            board.maxTile = stackPop * 2;
+                        }
                         stackPop = 0;
                     }
                 }
@@ -341,6 +353,9 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
                             stackPop *
                             2;
                         score += stackPop * 2;
+                        if (stackPop * 2 > board.maxTile) {
+                            board.maxTile = stackPop * 2;
+                        }
                         stackPop = 0;
                     }
                 }
@@ -367,7 +382,9 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
         MoveDirection indexed dir,
         uint256 newIndex,
         uint256 extraScore,
-        uint256 totalScore
+        uint256 totalScore,
+        uint256 maxTile,
+        uint256 moves
     );
 
     function move(
@@ -405,7 +422,7 @@ contract Game2048 is ERC721("2048 Board", "2048B"), Initializable {
 
         boards[boardId] = board;
 
-        emit Move(board.owner, boardId, dir, newIndex, extraScore, board.score);
+        emit Move(board.owner, boardId, dir, newIndex, extraScore, board.score, board.maxTile, board.moves);
     }
 
     // event EndGame(

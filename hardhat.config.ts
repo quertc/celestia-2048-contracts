@@ -36,7 +36,7 @@ const config: HardhatUserConfig = {
       accounts: [ PRIVATE_KEY ]
     },
     modulargames_testnet: {
-      url: "https://modulargames-rpc-testnet.upnodedev.xyz",
+      url: "https://goerli.modulargames.xyz",
       chainId: 20482049,
       accounts: [ PRIVATE_KEY ]
     },

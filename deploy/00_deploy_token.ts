@@ -11,6 +11,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     from: deployer,
     args: [deployer],
     deterministicDeployment: "0x2048",
+    gasPrice: "10000000",
   })
 }
 

@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const token = await ethers.deployContract("Token2048", {
+  const token = await ethers.deployContract("Token2048", [], {
     nonce: 0,
   });
   await token.waitForDeployment();

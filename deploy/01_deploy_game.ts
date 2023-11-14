@@ -23,6 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       proxyContract: "OpenZeppelinTransparentProxy",
     },
     deterministicDeployment: "0x2048",
+    gasPrice: "10000000",
   })
 
   const game2048 = await ethers.getContract('Game2048') as Game2048
