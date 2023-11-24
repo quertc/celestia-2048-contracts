@@ -12,7 +12,7 @@ const deployRewardToken: DeployFunction = async function (hre: HardhatRuntimeEnv
     from: deployer,
     args: [game2048Address],
     log: true,
-    // deterministicDeployment: '0x2048',
+    deterministicDeployment: '0x2048',
   });
 };
 

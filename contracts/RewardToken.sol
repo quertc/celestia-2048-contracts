@@ -36,4 +36,8 @@ contract RewardToken is ERC1155, Ownable {
         _mint(boardOwner, boardId, scoreToMint, "");
         emit RewardClaimed(boardOwner, boardId, scoreToMint);
     }
+
+    function getLastClaimedScore(uint256 boardId) public view returns (uint256) {
+        return lastClaimedScores[boardId];
+    }
 }
